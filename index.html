@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111318">
+  <meta name="description" content="Inventario, catálogo y ventas de videojuegos y accesorios.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <title>GameStock Manager</title>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark">GS</div><div><strong>GAMESTOCK</strong><small>MANAGER</small></div></div>
+  <div class="top-actions"><span class="status-dot"></span><span id="syncLabel">Guardado en este dispositivo</span></div>
+</header>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="nav-label">MENÚ PRINCIPAL</div>
+    <button class="nav active" data-view="dashboard">▦ <span>Dashboard</span></button>
+    <button class="nav" data-view="catalog">🎮 <span>Productos</span></button>
+    <button class="nav" data-view="import">⇧ <span>Importar Excel</span></button>
+    <button class="nav" data-view="sales">＋ <span>Registrar venta</span></button>
+    <button class="nav" data-view="history">◷ <span>Historial</span></button>
+    <div class="nav-label settings-label">SISTEMA</div>
+    <button class="nav" data-view="settings">⚙ <span>Configuración</span></button>
+    <div class="sidebar-note"><b>GameStock</b><br>Control simple de inventario y ventas.</div>
+  </aside>
+  <main class="content">
+    <section class="view active" id="view-dashboard">
+      <div class="page-heading"><div><p class="eyebrow">RESUMEN GENERAL</p><h1>Dashboard</h1><p class="muted">Estado actual de tu negocio.</p></div><button class="button primary" data-goto="sales">＋ Nueva venta</button></div>
+      <div class="stats">
+        <article class="stat"><span>PRODUCTOS REGISTRADOS</span><strong id="statProducts">0</strong><small>Referencias en catálogo</small></article>
+        <article class="stat"><span>UNIDADES DISPONIBLES</span><strong id="statUnits">0</strong><small>Stock total</small></article>
+        <article class="stat"><span>VENTAS REGISTRADAS</span><strong id="statSales">0 Bs</strong><small>Acumulado histórico</small></article>
+        <article class="stat"><span>STOCK BAJO</span><strong id="statLow">0</strong><small>Productos con 2 o menos</small></article>
+      </div>
+      <div class="quick-actions">
+        <button class="quick-action" data-goto="import"><span>⇧</span><b>Importar Excel</b><small>Cargar catálogo</small></button>
+        <button class="quick-action" data-goto="catalog"><span>⌕</span><b>Buscar producto</b><small>Consultar inventario</small></button>
+        <button class="quick-action" data-goto="sales"><span>＋</span><b>Registrar venta</b><small>Descontar unidades</small></button>
+        <button class="quick-action" id="quickAdd"><span>✚</span><b>Nuevo producto</b><small>Agregar manualmente</small></button>
+      </div>
+      <div class="grid-two">
+        <article class="panel"><div class="panel-head"><div><h2>Ventas recientes</h2><p class="muted">Movimientos más recientes</p></div><button class="text-button" data-goto="history">Ver historial →</button></div><div id="recentSales" class="empty">Todavía no hay ventas registradas.</div></article>
+        <article class="panel"><div class="panel-head"><div><h2>Stock bajo</h2><p class="muted">Productos que necesitan reposición</p></div></div><div id="lowStock" class="empty">No hay alertas de stock.</div></article>
+      </div>
+      <div class="panel"><div class="panel-head"><div><h2>Actividad de ventas</h2><p class="muted">Últimos 7 días · bolivianos</p></div></div><div id="salesChart" class="sales-chart"><div class="empty">Registra ventas para ver tu actividad.</div></div></div>
+      <div class="panel"><div class="panel-head"><div><h2>Catálogo por página / proveedor</h2><p class="muted">Distribución de productos importados</p></div></div><div id="groups" class="group-list empty">Importa un Excel para comenzar.</div></div>
+    </section>
+
+    <section class="view" id="view-catalog">
+      <div class="page-heading"><div><p class="eyebrow">INVENTARIO</p><h1>Todos los productos</h1><p class="muted">Busca títulos, revisa precios y controla cantidades.</p></div><button class="button primary" data-goto="import">⇧ Importar Excel</button></div>
+      <div class="toolbar"><input id="catalogSearch" class="input search" placeholder="Buscar videojuego, plataforma o página…"><select id="groupFilter" class="input"><option value="">Todas las páginas</option></select><select id="stockFilter" class="input"><option value="">Todo el stock</option><option value="available">Con stock</option><option value="empty">Agotados</option><option value="low">Stock bajo (≤2)</option></select></div>
+      <div class="table-wrap"><table><thead><tr><th>PRODUCTO</th><th>PÁGINA / PROVEEDOR</th><th>PRECIO USD</th><th>PRECIO BOB</th><th>STOCK</th><th></th></tr></thead><tbody id="productRows"><tr><td colspan="6" class="empty">Todavía no hay productos.</td></tr></tbody></table></div>
+      <p class="footnote" id="catalogCount">0 productos</p>
+    </section>
+
+    <section class="view" id="view-import">
+      <div class="page-heading"><div><p class="eyebrow">CARGA DE DATOS</p><h1>Importar Excel</h1><p class="muted">Carga tu lista de títulos y precios desde un archivo .xlsx o .xls.</p></div></div>
+      <div class="panel import-panel">
+        <div class="upload-icon">⇧</div><h2>Sube tu archivo Excel</h2><p class="muted">Se intentará reconocer automáticamente las columnas de nombre, precio, cantidad, plataforma y página.</p>
+        <label class="button primary file-button">Seleccionar archivo<input id="excelFile" type="file" accept=".xlsx,.xls,.csv"></label>
+        <div id="fileStatus" class="file-status">No hay ningún archivo seleccionado.</div>
+      </div>
+      <div class="panel"><h2>Columnas reconocidas</h2><p class="muted">Nombres habituales aceptados: título / producto / juego, precio / price / USD, stock / cantidad, página / proveedor / website.</p>
+        <div class="callout">La importación agrega productos al catálogo. Si encuentra el mismo nombre y página, actualiza sus datos en lugar de duplicarlo. Haz una copia de tu archivo original antes de importar.</div>
+      </div>
+      <div class="panel hidden" id="previewPanel"><div class="panel-head"><div><h2>Vista previa</h2><p class="muted" id="previewSummary"></p></div><button class="button primary" id="confirmImport">Importar productos</button></div><div class="table-wrap"><table><thead><tr><th>PRODUCTO</th><th>PÁGINA</th><th>USD</th><th>CANTIDAD</th></tr></thead><tbody id="previewRows"></tbody></table></div></div>
+    </section>
+
+    <section class="view" id="view-sales">
+      <div class="page-heading"><div><p class="eyebrow">PUNTO DE VENTA</p><h1>Registrar venta</h1><p class="muted">Cada venta descuenta automáticamente las unidades del inventario.</p></div></div>
+      <div class="sale-layout">
+        <form class="panel sale-form" id="saleForm">
+          <label>Buscar producto<input id="saleSearch" class="input" placeholder="Escribe el nombre del juego…" autocomplete="off"></label>
+          <div id="saleMatches" class="matches"><p class="muted">Busca un producto para seleccionarlo.</p></div>
+          <div class="selected-product" id="selectedProduct"><span class="muted">Ningún producto seleccionado</span></div>
+          <div class="form-row"><label>Cantidad<input id="saleQty" class="input" type="number" min="1" value="1"></label><label>Precio unitario (Bs)<input id="salePrice" class="input" type="number" min="0" step="0.01" placeholder="0.00"></label></div>
+          <label>Nota (opcional)<input id="saleNote" class="input" placeholder="Cliente, pedido o referencia"></label>
+          <div class="sale-total"><span>Total de venta</span><strong id="saleTotal">0 Bs</strong></div>
+          <button class="button primary full" type="submit">Confirmar venta y descontar stock</button>
+          <p class="form-message" id="saleMessage" aria-live="polite"></p>
+        </form>
+        <aside class="panel"><h2>Antes de confirmar</h2><ul class="check-list"><li>Verifica el producto y la plataforma.</li><li>Comprueba la cantidad disponible.</li><li>Puedes cambiar el precio de venta para esta operación.</li><li>La venta quedará guardada en el historial.</li></ul><div class="callout">El precio registrado en la venta queda congelado. Cambiar el tipo de cambio después no modifica ventas anteriores.</div></aside>
+      </div>
+    </section>
+
+    <section class="view" id="view-history">
+      <div class="page-heading"><div><p class="eyebrow">MOVIMIENTOS</p><h1>Historial de ventas</h1><p class="muted">Consulta las operaciones registradas.</p></div><button class="button secondary" id="exportSales">Exportar CSV</button></div>
+      <div class="toolbar"><input id="historySearch" class="input search" placeholder="Buscar por producto o nota…"></div>
+      <div class="table-wrap"><table><thead><tr><th>FECHA</th><th>PRODUCTO</th><th>CANT.</th><th>PRECIO UNIT.</th><th>TOTAL</th><th>NOTA</th><th></th></tr></thead><tbody id="salesRows"><tr><td colspan="7" class="empty">Todavía no hay ventas.</td></tr></tbody></table></div>
+    </section>
+
+    <section class="view" id="view-settings">
+      <div class="page-heading"><div><p class="eyebrow">PREFERENCIAS</p><h1>Configuración</h1><p class="muted">Define cómo se convierten y muestran tus precios.</p></div></div>
+      <div class="settings-grid">
+        <form class="panel" id="settingsForm"><h2>Tipo de cambio</h2><p class="muted">El precio USD original se conserva. Aquí defines cuántos bolivianos vale un dólar para mostrar el precio convertido.</p>
+          <label>Preset de cambio<select id="preset" class="input"><option value="6.96">Oficial · 6,96 Bs</option><option value="8">8 Bs</option><option value="9">9 Bs</option><option value="10">10 Bs</option><option value="custom">Personalizado</option></select></label>
+          <label>Tipo de cambio (Bs por USD)<input id="exchangeRate" class="input" type="number" min="0.01" step="0.01" required></label>
+          <label>Redondeo<select id="rounding" class="input"><option value="none">Sin redondeo</option><option value="nearest">Al boliviano más cercano</option><option value="up">Redondear hacia arriba</option></select></label>
+          <button class="button primary" type="submit">Guardar configuración</button><p id="settingsMessage" class="form-message" aria-live="polite"></p>
+        </form>
+        <div class="panel"><h2>Datos y respaldo</h2><p class="muted">Los datos se guardan localmente en este navegador. Exporta una copia periódicamente.</p><button class="button secondary full" id="backupBtn">Descargar respaldo JSON</button><label class="button secondary full file-button">Restaurar respaldo JSON<input id="restoreFile" type="file" accept=".json"></label><div class="callout warning">Esta primera versión no sincroniza automáticamente entre dispositivos. Para compartir el mismo inventario entre iPhone, iPad y PC hará falta añadir una base de datos en la nube.</div><button class="text-danger" id="clearData">Borrar todos los datos de esta app</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="productModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <form id="quickProductForm" class="modal-card">
+    <div class="panel-head"><div><p class="eyebrow">CATÁLOGO</p><h2 id="modalTitle">Agregar producto</h2></div><button type="button" class="icon-button" id="closeModal" aria-label="Cerrar">✕</button></div>
+    <label>Nombre del producto<input class="input" id="newName" required placeholder="Ej. Tekken 8 PS5"></label>
+    <div class="form-row"><label>Página / proveedor<input class="input" id="newPage" placeholder="Ej. PlayStation"></label><label>Plataforma<input class="input" id="newPlatform" placeholder="Ej. PS5"></label></div>
+    <div class="form-row"><label>Precio USD<input class="input" id="newUsd" type="number" min="0" step="0.01" required></label><label>Cantidad inicial<input class="input" id="newQty" type="number" min="0" step="1" value="0" required></label></div>
+    <div class="modal-actions"><button type="button" class="button secondary" id="cancelModal">Cancelar</button><button type="submit" class="button primary">Guardar producto</button></div>
+  </form>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
